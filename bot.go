@@ -1,4 +1,4 @@
-package go_tgbot
+package gotgbot
 
 import (
 	"bytes"
