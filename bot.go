@@ -6,13 +6,14 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
-var httpClient = &http.Client{Timeout: time.Second*30}
+var httpClient = &http.Client{Timeout: time.Second * 30}
 
 func (bot *BotAPI) GetChat(chatId int) (Chat, error) {
-	data := map[string]int{"chat_id":chatId}
+	data := map[string]int{"chat_id": chatId}
 
 	marshal, err := json.Marshal(data)
 	if err != nil {
@@ -35,7 +36,7 @@ func (bot *BotAPI) GetChat(chatId int) (Chat, error) {
 }
 
 func (bot *BotAPI) GetChatMembersCount(chatId int) (int, error) {
-	data := map[string]int{"chat_id":chatId}
+	data := map[string]int{"chat_id": chatId}
 
 	marshal, err := json.Marshal(data)
 	if err != nil {
@@ -54,7 +55,7 @@ func (bot *BotAPI) GetChatMembersCount(chatId int) (int, error) {
 }
 
 func (bot *BotAPI) request(apiMethodName string, marshal []byte) (APIResponse, error) {
-	url := "https://api.telegram.org/bot"+bot.Token+"/"+apiMethodName
+	url := "https://api.telegram.org/bot" + bot.Token + "/" + apiMethodName
 
 	reader := bytes.NewReader(marshal)
 	response, err := httpClient.Post(url, "application/json", reader)
@@ -68,7 +69,7 @@ func (bot *BotAPI) request(apiMethodName string, marshal []byte) (APIResponse, e
 	}
 
 	if bot.Debug {
-		log.Println("\n------------\n"+string(body)+"\n------------\n")
+		log.Println("\n------------\n" + string(body) + "\n------------\n")
 	}
 
 	var resp APIResponse
@@ -99,4 +100,32 @@ func NewBot(token string) BotAPI {
 // SetDebug Set debug mode
 func (bot *BotAPI) SetDebug(debug bool) {
 	bot.Debug = true
+}
+
+func (bot *BotAPI) Log(message string, fileName string) bool {
+	if _, err := os.Stat(fileName); err != nil {
+		if os.IsNotExist(err) {
+			//log.Println("file does not exist")
+			file, err := os.Create(fileName)
+			file.Close()
+			if err != nil {
+				log.Println(err)
+				return false
+			}
+		} else {
+			// other error
+			return false
+		}
+	}
+
+	file, err := os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+
+	defer file.Close()
+	file.WriteString(message + "\n")
+
+	return true
 }
